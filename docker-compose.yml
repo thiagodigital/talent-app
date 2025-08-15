@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   backend:
     build:
@@ -11,23 +13,21 @@ services:
       - talent_network
     depends_on:
       - mariadb
-      # - redis
+
   frontend:
     build:
       context: ./frontend
       dockerfile: ./docker/Dockerfile
     container_name: frontend_app
-    ports:
-      - "${FRONT_PORT:-5173}:5173"
     working_dir: /app
     volumes:
       - ./frontend:/app
-      - /app/node_modules 
-    # command: npm install && npm run dev
-    depends_on:
-      - backend
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0
     networks:
       - talent_network
+    depends_on:
+      - backend
 
   nginx:
     image: nginx:latest
@@ -37,11 +37,31 @@ services:
       - "${NGINX_PORT_SEG:-443}:443"
     volumes:
       - ./backend:/var/www
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./docker/nginx/certs:/etc/ssl/certs
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      # - ./docker/nginx/conf.d/default.${APP_ENV}.conf:/etc/nginx/conf.d/default.conf
+      # - ./letsencrypt:/etc/letsencrypt
     depends_on:
       - backend
+      - frontend
     networks:
       - talent_network
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot_ssl
+    volumes:
+      - ./docker/nginx/certs_letsencrypt:/etc/letsencrypt
+      - ./docker/nginx/html:/var/www/certbot
+    entrypoint: >
+      sh -c "trap exit TERM;
+             while :; do
+               if [ \"$APP_ENV\" = \"production\" ]; then
+                 certbot renew --webroot -w /var/www/certbot &&
+                 nginx -s reload;
+               fi;
+               sleep 12h & wait $${!};
+             done"
 
   mariadb:
     image: "mariadb:10.7"
@@ -69,6 +89,7 @@ services:
 networks:
   talent_network:
     driver: bridge
+
 volumes:
   mariadb-data:
     driver: local
