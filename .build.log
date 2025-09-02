@@ -1,0 +1,14 @@
+
+Project directory detected: /root/docker/talent-app
+Script started at: Mon Sep  1 17:30:51 UTC 2025
+Creating Docker Compose file from provided configuration
+Creating project environment from provided configuration
+Starting to deploy project
+------------------------
+ Container database_app  Running
+ Container backend_app  Running
+ Container frontend_app  Running
+ Container nginx_server  Running
+ Container certbot_ssl  Running
+------------------------
+Project is up and running
