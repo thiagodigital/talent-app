@@ -84,6 +84,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  queue:
+    build:
+      context: ./backend
+      dockerfile: ./docker/Dockerfile
+    container_name: queue_worker
+    working_dir: /var/www
+    command: php artisan queue:work --verbose --tries=3 --timeout=90
+    volumes:
+      - ./backend:/var/www
+    depends_on:
+      - mariadb
+      - backend
+    networks:
+      - talent_network
+    restart: unless-stopped
 
 networks:
   talent_network:
