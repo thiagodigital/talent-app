@@ -98,6 +98,22 @@ services:
       - talent_network_app
     restart: unless-stopped
 
+  reverb:
+    build:
+      context: ./backend
+      dockerfile: ./docker/Dockerfile
+    container_name: reverb_app
+    working_dir: /var/www
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    volumes:
+      - ./backend:/var/www
+    depends_on:
+      - backend
+    networks:
+      - talent_network_app
+    ports:
+      - "8080:8080"
+
 networks:
   talent_network_app:
     driver: bridge
